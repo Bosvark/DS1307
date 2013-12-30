@@ -37,6 +37,7 @@ CFLAGS      += $(INCLUDES) $(DEPENDFLAGS) $(BASEFLAGS) $(WARNFLAGS)
 all: $(OBJS)
 	$(info ********************************* Linking *********************************)
 	$(GNUPREFIX)-g++ -o $(OUTPUTDIR)/$(APPNAME) $(OBJS)
+	chmod +x $(OUTPUTDIR)/$(APPNAME)
 
 .PHONY: clean
 
