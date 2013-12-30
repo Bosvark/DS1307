@@ -1,0 +1,17 @@
+*.o
+*.axf
+*omc
+*.omc
+*.lock
+*.*.lock
+.omakedb
+*~
+*.*~
+
+# Ignore platform output directories
+**/out
+
+# Ignore Eclipse project files
+.cproject
+.project
+
