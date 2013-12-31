@@ -1,0 +1,3 @@
+This is a sample application demonstrating the interaction to a DS1307 RTC chip on a Raspberry Pi.
+
+The interface uses the I2C bus to read and write individual registers on the DS1307 chip.
