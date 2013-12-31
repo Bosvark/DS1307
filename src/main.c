@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #define APP_NAME	"DS1307"
 
@@ -27,8 +28,46 @@ void print_usage(void)
  */
 }
 
+int ascii_to_hex(char *source, int source_len, char *dest)
+{
+	int i, pos=0;
+
+	if(source_len%2)
+		return -1;		/* Error */
+
+	for(i=0; i<source_len; i++){
+		if(((source[i] <= 'F') && (source[i] >= 'A')) || ((source[i] <= 'f') && (source[i] >= 'a'))){
+			dest[pos] = (toupper(source[i]) - 'A' + 0x0a) << 4;
+		}else if((source[i] <= '9') && (source[i] >= '0')){
+			dest[pos] = (source[i] - '0') << 4;
+		}else
+			return -1;	/* Error */
+
+		i++;
+
+		if(((source[i] <= 'F') && (source[i] >= 'A')) || ((source[i] <= 'f') && (source[i] >= 'a'))){
+			dest[pos] |= (toupper(source[i]) - 'A' + 0x0a) & 0x0f;
+		}else if((source[i] <= '9') && (source[i] >= '0')){
+			dest[pos] |= (source[i] - '0') & 0x0f;
+		}else
+			return -1;	/* Error */
+
+		pos++;
+	}
+
+	return pos;
+}
+
 int ds1307_init(void)
 {
+	char i2c_hex_addr[10];
+	int i2c_addr_len=0;
+
+	if((i2c_addr_len = ascii_to_hex(i2c_addr, strlen(i2c_addr), i2c_hex_addr)) <= 0){
+		printf("Device address format error\n");
+		exit(1);
+	}
+
 	/* Open up the I2C bus
 	*/
 	fd = open(i2c_bus, O_RDWR);
@@ -40,7 +79,7 @@ int ds1307_init(void)
 
 	/* Specify the address of the slave device.
 	 */
-	if (ioctl(fd, I2C_SLAVE, atoi(i2c_addr)) < 0)
+	if (ioctl(fd, I2C_SLAVE, i2c_hex_addr[0]) < 0)
 	{
 		perror("Failed to acquire bus access and/or talk to slave");
 		exit(1);
