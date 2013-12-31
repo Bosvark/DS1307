@@ -22,7 +22,7 @@ void print_usage(void)
 {
 	printf("%s %d.%d\n", APP_NAME, VERSION_MAJOR, VERSION_MINOR);
 	printf("-a<I2C device address>\n");
-	printf("-b<I2C bus name>\n");
+	printf("-b<I2C bus number>\n");
 	printf("-r<Register to read>\n");
 	printf("-w<Register to write>=<value>\n");
 }
@@ -181,13 +181,13 @@ int main(int argc, const char* argv[])
 
 		}else if (memcmp(argv[i], "-b", 2) == 0){
 			if(strlen(&argv[i][2]) >= sizeof(i2c_bus)){
-				printf("Invalid bus name\n\n");
+				printf("Invalid bus number\n\n");
 				print_usage();
 				return -1;
 			}
 
-			printf("Bus %s\n", &argv[i][2]);
-			memcpy(i2c_bus, &argv[i][2], strlen(&argv[i][2]));
+			sprintf(i2c_bus, "/dev/i2c-%d", atoi(&argv[i][2]));
+			printf("Bus %s\n", i2c_bus);
 
 		}else if (memcmp(argv[i], "-r", 2) == 0){
 			/* Place holder */
