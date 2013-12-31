@@ -27,22 +27,44 @@ void print_usage(void)
 	printf("-w<Register to write>=<value>\n");
 }
 
-int ascii_to_hex(char *source, int source_len, char *dest)
+const char    hexlookup[] = {"0123456789ABCDEF"};
+
+void hex_to_ascii(const unsigned char *source, char *dest, unsigned int source_length)
+{
+    unsigned int i;
+    unsigned char temp;
+
+  for (i = 0; i < source_length; i++) {
+        temp = source[i];
+        temp >>= 4;
+        dest[i*2] = hexlookup[temp];
+
+        temp = source[i];
+        temp &= 0x0f;
+        dest[(i*2)+1] = hexlookup[temp];
+    }
+}
+
+int ascii_to_hex(const char *source, int source_len, char *dest)
 {
 	int i, pos=0;
 
-	if(source_len%2)
+	if((source_len > 1) && (source_len%2))
 		return -1;		/* Error */
 
 	for(i=0; i<source_len; i++){
-		if(((source[i] <= 'F') && (source[i] >= 'A')) || ((source[i] <= 'f') && (source[i] >= 'a'))){
-			dest[pos] = (toupper(source[i]) - 'A' + 0x0a) << 4;
-		}else if((source[i] <= '9') && (source[i] >= '0')){
-			dest[pos] = (source[i] - '0') << 4;
-		}else
-			return -1;	/* Error */
+		dest[pos] = 0;
 
-		i++;
+		if(source_len > 1){
+			if(((source[i] <= 'F') && (source[i] >= 'A')) || ((source[i] <= 'f') && (source[i] >= 'a'))){
+				dest[pos] = (toupper(source[i]) - 'A' + 0x0a) << 4;
+			}else if((source[i] <= '9') && (source[i] >= '0')){
+				dest[pos] = (source[i] - '0') << 4;
+			}else
+				return -1;	/* Error */
+
+			i++;
+		}
 
 		if(((source[i] <= 'F') && (source[i] >= 'A')) || ((source[i] <= 'f') && (source[i] >= 'a'))){
 			dest[pos] |= (toupper(source[i]) - 'A' + 0x0a) & 0x0f;
@@ -112,25 +134,18 @@ char ds1307_read(char reg)
 
 char ds1307_write(char reg, char val)
 {
-	char retval=0;
+	char buffer[2];
 
-	/* Write a byte to the slave.
-	 */
-	if (write(fd, &reg, 1) != 1)
+	buffer[0] = reg;
+	buffer[1] = val;
+
+	if (write(fd, buffer, 2) != 2)
 	{
 		perror("Failed to write to the i2c bus");
 		exit(1);
 	}
 
-	/* Write the value to the slave.
-	 */
-	if (write(fd,&val,1) != 1)
-	{
-		perror("Failed to write to the i2c bus");
-		exit(1);
-	}
-
-	return retval;
+	return 0;
 }
 
 int ds1307_cleanup(void)
@@ -173,10 +188,13 @@ int main(int argc, const char* argv[])
 
 			printf("Bus %s\n", &argv[i][2]);
 			memcpy(i2c_bus, &argv[i][2], strlen(&argv[i][2]));
+
 		}else if (memcmp(argv[i], "-r", 2) == 0){
 			/* Place holder */
+
 		}else if (memcmp(argv[i], "-w", 2) == 0){
 			/* Place holder */
+
 		}else{
 			printf("Invalid argument %s\n", argv[i]);
 			exit(1);
@@ -195,6 +213,40 @@ int main(int argc, const char* argv[])
 
 	ds1307_init();
 
+	/* Perform writing of individual registers */
+	for (i=1; i< argc; i++){
+
+		if (memcmp(argv[i], "-w", 2) == 0){
+			char *reg, *val;
+			char reg_hex[10], val_hex[10];
+
+			reg = strtok((char*)&argv[i][2], "=");
+			val = strtok(NULL, "\0");
+
+			if((reg == NULL) || (val == NULL)){
+				printf("1 Invalid argument %s\n", argv[i]);
+				ds1307_cleanup();
+				exit(1);
+			}
+
+			if(ascii_to_hex(reg, strlen(reg), reg_hex) <= 0){
+				printf("2 Invalid argument %s\n", argv[i]);
+				ds1307_cleanup();
+				exit(1);
+			}
+
+			if(ascii_to_hex(val, strlen(val), val_hex) <= 0){
+				printf("3 Invalid argument %s\n", argv[i]);
+				ds1307_cleanup();
+				exit(1);
+			}
+
+			ds1307_write(reg_hex[0], val_hex[0]);
+			printf("Wrote register 0x%02x = 0x%02x\n", reg_hex[0], val_hex[0]);
+		}
+	}
+
+	/* Perform reading of individual registers */
 	for (i=1; i< argc; i++){
 
 		if (memcmp(argv[i], "-r", 2) == 0){
