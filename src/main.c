@@ -24,8 +24,7 @@ void print_usage(void)
 	printf("-a<I2C device address>\n");
 	printf("-b<I2C bus name>\n");
 	printf("-r<Register to read>\n");
-/*	printf("-w<Register to write>=<value>\n");
- */
+	printf("-w<Register to write>=<value>\n");
 }
 
 int ascii_to_hex(char *source, int source_len, char *dest)
@@ -174,6 +173,13 @@ int main(int argc, const char* argv[])
 
 			printf("Bus %s\n", &argv[i][2]);
 			memcpy(i2c_bus, &argv[i][2], strlen(&argv[i][2]));
+		}else if (memcmp(argv[i], "-r", 2) == 0){
+			/* Place holder */
+		}else if (memcmp(argv[i], "-w", 2) == 0){
+			/* Place holder */
+		}else{
+			printf("Invalid argument %s\n", argv[i]);
+			exit(1);
 		}
 	}
 
